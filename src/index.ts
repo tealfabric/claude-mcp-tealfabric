@@ -267,11 +267,11 @@ server.registerTool(
   "tealfabric_upload_document",
   {
     description:
-      "Upload a file to Tealfabric documents storage. Use to publish built package files for delivery. Overwrites if destination_path exists.",
+      "Upload a file to Tealfabric documents storage. Use to publish built package files for delivery. The file is stored in destination_path using the uploaded file's name.",
     inputSchema: z.object({
       destination_path: z
         .string()
-        .describe("Server path where the file will be stored (e.g. packages/report-v1.zip)"),
+        .describe("Directory path on the server (without filename). File keeps its original name (e.g. packages/ or packages/reports/)"),
       file_path: z
         .string()
         .describe("Local filesystem path to the file to upload (e.g. ./dist/package.zip)"),
