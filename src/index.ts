@@ -3,7 +3,8 @@
  * Tealfabric MCP Server for Cursor
  *
  * Exposes tools: list webapps, get/update/publish webapp, list processes/steps,
- * get process/step, execute process, list/upload/move/delete documents (package files).
+ * get process/step, create/update process, create/update process step, execute process,
+ * list/upload/move/delete documents (package files).
  *
  * Env: TEALFABRIC_API_KEY (required), TEALFABRIC_API_URL (optional, default https://tealfabric.io)
  *
@@ -216,6 +217,129 @@ server.registerTool(
   async ({ process_id, input }) => {
     try {
       const out = await tealfabric.executeProcess(process_id, input);
+      return { content: resultContent(out) };
+    } catch (e) {
+      return { content: jsonContent(`Error: ${e instanceof Error ? e.message : String(e)}`) };
+    }
+  }
+);
+
+server.registerTool(
+  "tealfabric_create_process",
+  {
+    description: "Create a new Tealfabric process (process flow). Returns the new process_id.",
+    inputSchema: z.object({
+      name: z.string().describe("Process name"),
+      description: z.string().optional(),
+      type: z.string().optional(),
+      status: z.enum(["draft", "active", "inactive", "archived"]).optional().default("draft"),
+      version: z.string().optional(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      configuration: z.record(z.unknown()).optional(),
+      is_template: z.boolean().optional(),
+      template_id: z.string().optional(),
+      estimated_duration: z.number().optional(),
+      priority: z.string().optional(),
+    }),
+  },
+  async (args) => {
+    try {
+      const out = await tealfabric.createProcess(args);
+      return { content: resultContent(out) };
+    } catch (e) {
+      return { content: jsonContent(`Error: ${e instanceof Error ? e.message : String(e)}`) };
+    }
+  }
+);
+
+server.registerTool(
+  "tealfabric_update_process",
+  {
+    description: "Update an existing Tealfabric process (process flow).",
+    inputSchema: z.object({
+      process_id: z.string().describe("Process ID"),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      type: z.string().optional(),
+      status: z.enum(["draft", "active", "inactive", "archived"]).optional(),
+      version: z.string().optional(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      configuration: z.record(z.unknown()).optional(),
+      is_template: z.boolean().optional(),
+      template_id: z.string().optional(),
+      estimated_duration: z.number().optional(),
+      priority: z.string().optional(),
+    }),
+  },
+  async ({ process_id, ...body }) => {
+    try {
+      const out = await tealfabric.updateProcess(process_id, body);
+      return { content: resultContent(out) };
+    } catch (e) {
+      return { content: jsonContent(`Error: ${e instanceof Error ? e.message : String(e)}`) };
+    }
+  }
+);
+
+server.registerTool(
+  "tealfabric_create_process_step",
+  {
+    description: "Create a new process step in a process flow. Returns the new step_id.",
+    inputSchema: z.object({
+      process_id: z.string().describe("Process ID to add the step to"),
+      step_name: z.string().describe("Step name"),
+      name: z.string().optional().describe("Alias for step_name"),
+      step_type: z.string().optional().default("action"),
+      description: z.string().optional(),
+      code_snippet: z.string().optional(),
+      sequence: z.number().optional(),
+      position_x: z.number().optional(),
+      position_y: z.number().optional(),
+      estimated_duration: z.number().optional(),
+      assigned_user_id: z.string().optional(),
+      step_status: z.string().optional(),
+      input_schema: z.record(z.unknown()).optional(),
+      output_schema: z.record(z.unknown()).optional(),
+      configuration: z.record(z.unknown()).optional(),
+    }),
+  },
+  async (args) => {
+    try {
+      const out = await tealfabric.createProcessStep(args);
+      return { content: resultContent(out) };
+    } catch (e) {
+      return { content: jsonContent(`Error: ${e instanceof Error ? e.message : String(e)}`) };
+    }
+  }
+);
+
+server.registerTool(
+  "tealfabric_update_process_step",
+  {
+    description: "Update an existing process step in a process flow.",
+    inputSchema: z.object({
+      step_id: z.string().describe("Step ID"),
+      step_name: z.string().optional(),
+      name: z.string().optional().describe("Alias for step_name"),
+      step_type: z.string().optional(),
+      description: z.string().optional(),
+      code_snippet: z.string().optional(),
+      sequence: z.number().optional(),
+      position_x: z.number().optional(),
+      position_y: z.number().optional(),
+      estimated_duration: z.number().optional(),
+      assigned_user_id: z.string().optional(),
+      step_status: z.string().optional(),
+      input_schema: z.record(z.unknown()).optional(),
+      output_schema: z.record(z.unknown()).optional(),
+      configuration: z.record(z.unknown()).optional(),
+    }),
+  },
+  async ({ step_id, ...body }) => {
+    try {
+      const out = await tealfabric.updateProcessStep(step_id, body);
       return { content: resultContent(out) };
     } catch (e) {
       return { content: jsonContent(`Error: ${e instanceof Error ? e.message : String(e)}`) };

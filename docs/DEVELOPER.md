@@ -32,6 +32,8 @@ The Tealfabric Cursor Connector is an **MCP (Model Context Protocol) server** th
 - **Create** and **update** webapps (e.g. `page_content`, name)
 - **Publish** webapps
 - **Execute** ProcessFlow processes (with optional input)
+- **Create** and **update** processes (process flows)
+- **Create** and **update** process steps
 - **List, upload, move, delete** documents (package files for delivery)
 
 The server is **standalone**: it only depends on Node.js, npm packages (`@modelcontextprotocol/sdk`, `zod`), and the Tealfabric API. It does not depend on the Tealfabric codebase.
@@ -112,6 +114,10 @@ All tools return JSON (or error text) in MCP content. Parameters are validated w
 | `tealfabric_list_process_steps` | List steps of a process | `process_id` |
 | `tealfabric_get_process_step` | Get one process step by step_id | `step_id` |
 | `tealfabric_execute_process` | Execute a process | `process_id`, `input` (optional object) |
+| `tealfabric_create_process` | Create a new process (process flow) | `name`, optional: `description`, `type`, `status`, `version`, `category`, `tags`, etc. |
+| `tealfabric_update_process` | Update an existing process | `process_id`, optional: `name`, `description`, `status`, etc. |
+| `tealfabric_create_process_step` | Create a new step in a process flow | `process_id`, `step_name`, optional: `step_type`, `description`, `code_snippet`, etc. |
+| `tealfabric_update_process_step` | Update an existing process step | `step_id`, optional: `step_name`, `description`, `code_snippet`, etc. |
 | `tealfabric_list_documents` | List documents in a directory | `path` (optional), `tenant_id` (optional) |
 | `tealfabric_get_document_metadata` | Get file metadata | `file_path`, `tenant_id` (optional) |
 | `tealfabric_upload_document` | Upload a file (e.g. built package) | `destination_path`, `file_path`, `tenant_id` (optional) |
@@ -138,6 +144,10 @@ The connector calls the Tealfabric REST API under the hood. All requests use the
 | `tealfabric_list_process_steps` | GET | `/api/v1/processflow?action=steps&process_id={id}` |
 | `tealfabric_get_process_step` | GET | `/api/v1/processflow?action=step&step_id={id}` |
 | `tealfabric_execute_process` | POST | `/api/v1/processflow?action=execute-process` (body: `process_id`, `input`) |
+| `tealfabric_create_process` | POST | `/api/v1/processes?action=create` (JSON body) |
+| `tealfabric_update_process` | PUT | `/api/v1/processes?action=update` (body: `process_id`, …) |
+| `tealfabric_create_process_step` | POST | `/api/v1/processes?action=create-step` (body: `process_id`, `step_name`, …) |
+| `tealfabric_update_process_step` | PUT | `/api/v1/processes?action=update-step` (body: `step_id`, …) |
 | `tealfabric_list_documents` | GET | `/api/v1/documents?action=list` (+ optional `path`, `tenant_id`) |
 | `tealfabric_get_document_metadata` | GET | `/api/v1/documents?action=metadata&file_path={path}` |
 | `tealfabric_upload_document` | POST | `/api/v1/documents?action=upload` (multipart: `destination_path`, `file`) |

@@ -58,6 +58,10 @@ Replace:
 | `tealfabric_list_process_steps` | List steps of a process |
 | `tealfabric_get_process_step` | Get one process step by step_id |
 | `tealfabric_execute_process` | Execute a process (optional input) |
+| `tealfabric_create_process` | Create a new process (process flow) |
+| `tealfabric_update_process` | Update an existing process |
+| `tealfabric_create_process_step` | Create a new step in a process flow |
+| `tealfabric_update_process_step` | Update an existing process step |
 | `tealfabric_list_documents` | List documents in a directory |
 | `tealfabric_get_document_metadata` | Get file metadata |
 | `tealfabric_upload_document` | Upload a file (e.g. built package) |

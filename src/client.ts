@@ -155,6 +155,101 @@ export const tealfabric = {
     );
   },
 
+  async createProcess(body: {
+    name: string;
+    description?: string;
+    type?: string;
+    status?: "draft" | "active" | "inactive" | "archived";
+    version?: string;
+    category?: string;
+    tags?: string[];
+    configuration?: Record<string, unknown>;
+    is_template?: boolean;
+    template_id?: string;
+    estimated_duration?: number;
+    priority?: string;
+  }) {
+    return request<{ success: boolean; data?: { process_id?: string }; error?: string }>(
+      "POST",
+      "/api/v1/processes?action=create",
+      body
+    );
+  },
+
+  async updateProcess(
+    processId: string,
+    body: {
+      name?: string;
+      description?: string;
+      type?: string;
+      status?: "draft" | "active" | "inactive" | "archived";
+      version?: string;
+      category?: string;
+      tags?: string[];
+      configuration?: Record<string, unknown>;
+      is_template?: boolean;
+      template_id?: string;
+      estimated_duration?: number;
+      priority?: string;
+    }
+  ) {
+    return request<{ success: boolean; data?: unknown; error?: string }>(
+      "PUT",
+      "/api/v1/processes?action=update",
+      { process_id: processId, ...body }
+    );
+  },
+
+  async createProcessStep(body: {
+    process_id: string;
+    step_name: string;
+    name?: string;
+    step_type?: string;
+    description?: string;
+    code_snippet?: string;
+    sequence?: number;
+    position_x?: number;
+    position_y?: number;
+    estimated_duration?: number;
+    assigned_user_id?: string;
+    step_status?: string;
+    input_schema?: Record<string, unknown>;
+    output_schema?: Record<string, unknown>;
+    configuration?: Record<string, unknown>;
+  }) {
+    return request<{ success: boolean; data?: { step_id?: string }; error?: string }>(
+      "POST",
+      "/api/v1/processes?action=create-step",
+      body
+    );
+  },
+
+  async updateProcessStep(
+    stepId: string,
+    body: {
+      step_name?: string;
+      name?: string;
+      step_type?: string;
+      description?: string;
+      code_snippet?: string;
+      sequence?: number;
+      position_x?: number;
+      position_y?: number;
+      estimated_duration?: number;
+      assigned_user_id?: string;
+      step_status?: string;
+      input_schema?: Record<string, unknown>;
+      output_schema?: Record<string, unknown>;
+      configuration?: Record<string, unknown>;
+    }
+  ) {
+    return request<{ success: boolean; data?: unknown; error?: string }>(
+      "PUT",
+      "/api/v1/processes?action=update-step",
+      { step_id: stepId, ...body }
+    );
+  },
+
   // --- Documents (package files for delivery) ---
   async listDocuments(params?: { path?: string; tenant_id?: string }) {
     const q = new URLSearchParams({ action: "list" });
