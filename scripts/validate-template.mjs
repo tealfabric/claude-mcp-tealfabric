@@ -3,6 +3,8 @@ import { join, relative } from "node:path";
 
 const root = process.cwd();
 const failures = [];
+const rootPackageJsonPath = join(root, "package.json");
+const rootPackageJson = existsSync(rootPackageJsonPath) ? readJson(rootPackageJsonPath) : null;
 
 function fail(message) {
   failures.push(message);
@@ -68,6 +70,22 @@ if (!existsSync(marketplacePath)) {
         if (pluginJson.name !== plugin.name) {
           fail(
             `Plugin name mismatch: marketplace=${plugin.name}, plugin.json=${pluginJson.name}`
+          );
+        }
+
+        if (marketplace.version && pluginJson.version && marketplace.version !== pluginJson.version) {
+          fail(
+            `Version mismatch: marketplace=${marketplace.version}, ${relative(root, pluginJsonPath)}=${pluginJson.version}`
+          );
+        }
+
+        if (
+          rootPackageJson?.version &&
+          pluginJson.version &&
+          rootPackageJson.version !== pluginJson.version
+        ) {
+          fail(
+            `Version mismatch: package.json=${rootPackageJson.version}, ${relative(root, pluginJsonPath)}=${pluginJson.version}`
           );
         }
 

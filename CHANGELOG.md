@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Integrations** — Added MCP tools to list integrations with filters/actions and to create/update integrations
 - **API coverage** — Extended client and MCP tool registration to support Tealfabric `/connectors` and `/integrations` endpoints
 - **Documentation** — Updated `README.md` and developer docs with new connectors/integrations tools and API mapping
+- **Marketplace packaging** — Added Cursor marketplace manifests, plugin scaffolding, and plugin-level MCP config
+- **Skills** — Added low-token MCP usage skills for efficient integration create/update and schema-safe tool calling
+- **Validation and CI** — Added marketplace validation script and GitHub Actions workflow for build/validation checks
 
 ## [0.1.0] - Released
 
