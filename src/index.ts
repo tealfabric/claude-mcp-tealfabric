@@ -1,19 +1,13 @@
 #!/usr/bin/env node
 /**
- * Tealfabric MCP Server for Cursor
+ * Tealfabric MCP Server (stdio)
  *
- * Exposes tools: list webapps, get/update/publish webapp, list processes/steps,
- * get process/step, create/update process, create/update process step, execute process,
- * list/upload/move/delete documents (package files).
+ * Exposes tools for connectors, integrations, webapps, ProcessFlow, and documents.
  *
  * Env: TEALFABRIC_API_KEY (required), TEALFABRIC_API_URL (optional, default https://tealfabric.io)
  *
- * Cursor config (.cursor/mcp.json):
- *   "tealfabric": {
- *     "command": "node",
- *     "args": ["/absolute/path/to/mcp-server-tealfabric/dist/index.js"],
- *     "env": { "TEALFABRIC_API_KEY": "tf_live_...", "TEALFABRIC_API_URL": "https://tealfabric.io" }
- *   }
+ * Claude Code: use the tealfabric-mcp plugin, project `.mcp.json`, or:
+ *   claude mcp add --transport stdio --env TEALFABRIC_API_KEY=... tealfabric -- node /path/to/dist/index.js
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -29,9 +23,20 @@ function resultContent(data: unknown) {
   return jsonContent(typeof data === "string" ? data : JSON.stringify(data, null, 2));
 }
 
+/** Helps Claude Code tool search and large JSON responses (see MCP docs). */
+const SERVER_INSTRUCTIONS = [
+  "Tealfabric MCP: use these tools for Tealfabric cloud APIs (tenant-scoped via API key).",
+  "Prefer list_* before create/update when IDs are unknown.",
+  "Domains: tealfabric_list_connectors / integrations / webapps / processes / documents; execute_process runs ProcessFlow.",
+].join(" ");
+
+const largeJsonToolMeta = {
+  _meta: { "anthropic/maxResultSizeChars": 200_000 },
+};
+
 const server = new McpServer(
-  { name: "tealfabric", version: "0.1.0" },
-  { capabilities: { tools: {} } }
+  { name: "tealfabric", version: "0.2.0" },
+  { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS }
 );
 
 // --- Connectors ---
@@ -43,6 +48,7 @@ server.registerTool(
       action: z.enum(["get", "parameters"]).optional().describe("Optional action; omit to list all"),
       connector_id: z.string().optional().describe("Connector ID (for action=get when supported)"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ action, connector_id }) => {
     try {
@@ -115,6 +121,7 @@ server.registerTool(
       sort_by: z.enum(["name", "type", "status", "is_active", "created_at", "updated_at"]).optional(),
       sort_direction: z.enum(["ASC", "DESC"]).optional(),
     }),
+    ...largeJsonToolMeta,
   },
   async (args) => {
     try {
@@ -182,6 +189,7 @@ server.registerTool(
       search: z.string().optional().describe("Search by name or description"),
       limit: z.number().optional().describe("Max results (default 50)"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ search, limit }) => {
     try {
@@ -201,6 +209,7 @@ server.registerTool(
       webapp_id: z.string().describe("Webapp UUID"),
       version: z.number().optional().describe("Version number (optional)"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ webapp_id, version }) => {
     try {
@@ -285,6 +294,7 @@ server.registerTool(
   {
     description: "List Tealfabric ProcessFlow processes for the authenticated tenant.",
     inputSchema: z.object({}),
+    ...largeJsonToolMeta,
   },
   async () => {
     try {
@@ -301,6 +311,7 @@ server.registerTool(
   {
     description: "Get a single Tealfabric process by ID.",
     inputSchema: z.object({ process_id: z.string().describe("Process ID") }),
+    ...largeJsonToolMeta,
   },
   async ({ process_id }) => {
     try {
@@ -317,6 +328,7 @@ server.registerTool(
   {
     description: "List process steps for a given process.",
     inputSchema: z.object({ process_id: z.string().describe("Process ID") }),
+    ...largeJsonToolMeta,
   },
   async ({ process_id }) => {
     try {
@@ -333,6 +345,7 @@ server.registerTool(
   {
     description: "Get a single process step by step_id.",
     inputSchema: z.object({ step_id: z.string().describe("Step ID") }),
+    ...largeJsonToolMeta,
   },
   async ({ step_id }) => {
     try {
@@ -352,6 +365,7 @@ server.registerTool(
       process_id: z.string().describe("Process ID"),
       input: z.record(z.unknown()).optional().describe("Process input payload"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ process_id, input }) => {
     try {
@@ -496,6 +510,7 @@ server.registerTool(
       path: z.string().optional().describe("Directory path (e.g. packages/, or root if omitted)"),
       tenant_id: z.string().optional().describe("Tenant ID (defaults to authenticated tenant)"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ path, tenant_id }) => {
     try {
@@ -515,6 +530,7 @@ server.registerTool(
       file_path: z.string().describe("Full path to the file (e.g. packages/report-v1.zip)"),
       tenant_id: z.string().optional().describe("Tenant ID (defaults to authenticated tenant)"),
     }),
+    ...largeJsonToolMeta,
   },
   async ({ file_path, tenant_id }) => {
     try {

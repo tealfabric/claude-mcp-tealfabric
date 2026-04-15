@@ -1,6 +1,8 @@
-# Tealfabric MCP Server for Cursor
+# Tealfabric MCP Server (Claude Code & compatible clients)
 
-MCP (Model Context Protocol) server that connects **Cursor IDE** to the **Tealfabric** platform. The model in Cursor can list webapps and processes, publish webapps, get/update process steps, execute processes, and upload/manage documents (package files for delivery).
+MCP (Model Context Protocol) server that connects **Claude Code** (and other MCP clients) to the **Tealfabric** platform. The model can list webapps and processes, publish webapps, manage process steps, execute processes, and upload or manage documents (package files for delivery).
+
+The server runs **locally** as a **stdio** process; it calls Tealfabric’s HTTPS API using your API key.
 
 ## Prerequisites
 
@@ -10,41 +12,64 @@ MCP (Model Context Protocol) server that connects **Cursor IDE** to the **Tealfa
 ## Install
 
 ```bash
-cd cursor-mcp-tealfabric
+cd claude-mcp-tealfabric
 npm install
 npm run build
 ```
 
-## Cursor setup
+`npm run build` compiles TypeScript to `dist/` and copies the output to `plugins/tealfabric-mcp/dist/` so the Claude plugin bundle is self-contained.
 
-1. **Create an API key** in Tealfabric (if you don’t have one).
-2. **Add the MCP server** in Cursor:
-   - **Cursor Settings** (Cmd+, / Ctrl+,) → **Tools & MCP** → **Add new MCP server**
-   - Or create/edit **`.cursor/mcp.json`** in your project (or `~/.cursor/mcp.json` for global):
+## Claude Code: plugin (recommended)
+
+From the repository root (after `npm run build`):
+
+```text
+/plugin marketplace add .
+/plugin install tealfabric-mcp@tealfabric-team-marketplace
+```
+
+Set `TEALFABRIC_API_KEY` in your environment (or use a project `.mcp.json` with `${TEALFABRIC_API_KEY}`). See [Environment variables](#environment-variables).
+
+Use `/mcp` in Claude Code to verify the server. See [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+
+## Claude Code: manual stdio server
+
+```bash
+claude mcp add --transport stdio \
+  --env TEALFABRIC_API_KEY=YOUR_KEY \
+  --env TEALFABRIC_API_URL=https://tealfabric.io \
+  tealfabric -- node /ABSOLUTE/PATH/TO/claude-mcp-tealfabric/dist/index.js
+```
+
+Place all flags (`--transport`, `--env`, …) **before** the server name; use `--` before the command that starts the MCP server. On native Windows, some setups need `cmd /c` before `npx`/`node` (see Claude docs).
+
+## Project-scoped `.mcp.json` (team sharing)
+
+At the project root:
 
 ```json
 {
   "mcpServers": {
     "tealfabric": {
+      "type": "stdio",
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/cursor-mcp-tealfabric/dist/index.js"],
+      "args": ["/ABSOLUTE/PATH/TO/claude-mcp-tealfabric/dist/index.js"],
       "env": {
-        "TEALFABRIC_API_KEY": "YOUR_API_KEY_HERE",
-        "TEALFABRIC_API_URL": "https://tealfabric.io"
+        "TEALFABRIC_API_KEY": "${TEALFABRIC_API_KEY}",
+        "TEALFABRIC_API_URL": "${TEALFABRIC_API_URL:-https://tealfabric.io}"
       }
     }
   }
 }
 ```
 
-Replace:
+Do not commit real secrets; use env expansion and local env or secrets.
 
-- `YOUR_API_KEY_HERE` with your Tealfabric API key (e.g. `tf_live_...`).
-- `/ABSOLUTE/PATH/TO/cursor-mcp-tealfabric/...` with the real path to this repo (e.g. `/Users/username/src/cursor-mcp-tealfabric/dist/index.js`).
+## Cursor / other IDEs
 
-3. **Restart Cursor** so it picks up the new server.
+Any client that supports MCP stdio can run `node …/dist/index.js` with the same environment variables. Older Cursor-oriented `.cursor/mcp.json` examples are no longer maintained in this repo; use your client’s MCP settings with the same `command`, `args`, and `env`.
 
-## Tools exposed to Cursor
+## Tools exposed
 
 | Tool | Description |
 |------|-------------|
@@ -78,15 +103,16 @@ Replace:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `TEALFABRIC_API_KEY` | Yes | — | Tealfabric API key (X-API-Key / Bearer) |
+| `TEALFABRIC_API_KEY` | Yes | — | Tealfabric API key (`X-API-Key`) |
 | `TEALFABRIC_API_URL` | No | `https://tealfabric.io` | Tealfabric base URL |
 
 ## Security
 
-- Do **not** commit `.cursor/mcp.json` if it contains your real API key. Use `.cursor/mcp.json.example` (without the key) and add `mcp.json` to `.gitignore`, or use Cursor’s UI so the key stays local.
-- API keys are scoped to your user/tenant in Tealfabric; create keys with minimal required scopes if your platform supports it.
+- Do **not** commit real API keys. Use environment variables or `.mcp.json` expansion with secrets outside Git.
+- API keys are scoped to your user/tenant in Tealfabric; use minimal scopes where supported.
 
 ## Documentation
 
-- **Developer guide (setup, tools, API mapping, extending):** [docs/DEVELOPER.md](docs/DEVELOPER.md)
-- **Tealfabric platform docs (WebApps, ProcessFlow, APIs):** [https://tealfabric.io/docs](https://tealfabric.io/docs)
+- **Developer guide:** [docs/DEVELOPER.md](docs/DEVELOPER.md)
+- **Tealfabric platform:** [https://tealfabric.io/docs](https://tealfabric.io/docs)
+- **Claude Code MCP:** [https://code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)

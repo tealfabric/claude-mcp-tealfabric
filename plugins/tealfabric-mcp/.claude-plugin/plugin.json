@@ -1,0 +1,11 @@
+{
+  "name": "tealfabric-mcp",
+  "description": "Connect Claude Code to Tealfabric WebApps, ProcessFlow, Documents, Connectors, and Integrations via MCP.",
+  "version": "0.2.0",
+  "author": {
+    "name": "Tealfabric"
+  },
+  "homepage": "https://tealfabric.io/docs",
+  "logo": "assets/tealfabric-mcp-logo.svg",
+  "mcpServers": "./.mcp.json"
+}

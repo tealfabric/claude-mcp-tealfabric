@@ -1,32 +1,32 @@
-# Tealfabric MCP Plugin
+# Tealfabric MCP (Claude Code plugin)
 
-Cursor marketplace plugin for connecting AI workflows to Tealfabric.
+Claude Code plugin that registers a stdio MCP server for Tealfabric: WebApps, ProcessFlow, documents, connectors, and integrations.
 
-## What it provides
+## Requirements
 
-- Webapp operations (list/get/create/update/publish)
-- Process and process-step operations (list/get/create/update/execute)
-- Document operations (list/metadata/upload/move/delete)
-- Connector operations (list/test/oauth2-required)
-- Integration operations (list/create/update)
+- **Node.js** on the machine running Claude Code (the MCP server is started with `node`).
+- After cloning this repository, run **`npm install` and `npm run build` at the repository root** so `plugins/tealfabric-mcp/dist/` contains the built server (the plugin path must stay self-contained; see [plugin marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)).
 
-## Setup
+## Configure the API key
 
-1. Build the server:
+Set `TEALFABRIC_API_KEY` in your environment before enabling the plugin, or use a project `.mcp.json` / shell profile with `${TEALFABRIC_API_KEY}`.
 
-```bash
-npm install
-npm run build
+Optional: `TEALFABRIC_API_URL` (default `https://tealfabric.io`).
+
+## Install via marketplace
+
+From the repository root:
+
+```text
+/plugin marketplace add .
+/plugin install tealfabric-mcp@tealfabric-team-marketplace
 ```
 
-2. Configure plugin MCP with your Tealfabric API key when prompted.
+## Verify
 
-## Required environment
+In Claude Code: `/mcp` — the `tealfabric` server should appear when the plugin is enabled.
 
-- `TEALFABRIC_API_KEY`
-- `TEALFABRIC_API_URL` (defaults to `https://tealfabric.io`)
+## Contents
 
-## Quick checks
-
-- Run `npm run build`
-- Run `npm run validate:marketplace`
+- **Skills** — Efficient tool usage and safe API key handling (`skills/`)
+- **Agents** — Release checks (`agents/`)

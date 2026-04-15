@@ -30,30 +30,39 @@ function walk(dir) {
   return out;
 }
 
-const marketplacePath = join(root, ".cursor-plugin", "marketplace.json");
+const marketplacePath = join(root, ".claude-plugin", "marketplace.json");
 if (!existsSync(marketplacePath)) {
-  fail("Missing .cursor-plugin/marketplace.json");
+  fail("Missing .claude-plugin/marketplace.json");
 } else {
   const marketplace = readJson(marketplacePath);
   if (marketplace) {
+    if (!marketplace.name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(marketplace.name)) {
+      fail("marketplace.json needs a valid kebab-case name");
+    }
+    if (!marketplace.owner?.name) {
+      fail("marketplace.json must include owner.name");
+    }
     if (!Array.isArray(marketplace.plugins) || marketplace.plugins.length === 0) {
       fail("marketplace.json must include a non-empty plugins array");
     } else {
       for (const plugin of marketplace.plugins) {
-        if (!plugin?.name || !plugin?.path) {
-          fail("Each marketplace plugin entry needs name and path");
+        if (!plugin?.name || !plugin?.source) {
+          fail("Each marketplace plugin entry needs name and source");
           continue;
         }
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(plugin.name)) {
           fail(`Plugin name must be kebab-case: ${plugin.name}`);
         }
-        const pluginDir = join(root, plugin.path);
+        const pluginDir =
+          typeof plugin.source === "string" && plugin.source.startsWith("./")
+            ? join(root, plugin.source.slice(2))
+            : join(root, plugin.source);
         if (!existsSync(pluginDir)) {
-          fail(`Plugin path missing: ${plugin.path}`);
+          fail(`Plugin path missing: ${plugin.source}`);
           continue;
         }
 
-        const pluginJsonPath = join(pluginDir, ".cursor-plugin", "plugin.json");
+        const pluginJsonPath = join(pluginDir, ".claude-plugin", "plugin.json");
         if (!existsSync(pluginJsonPath)) {
           fail(`Missing plugin manifest: ${relative(root, pluginJsonPath)}`);
           continue;
@@ -61,7 +70,7 @@ if (!existsSync(marketplacePath)) {
         const pluginJson = readJson(pluginJsonPath);
         if (!pluginJson) continue;
 
-        for (const required of ["name", "displayName", "version", "description", "logo"]) {
+        for (const required of ["name", "description", "version"]) {
           if (!pluginJson[required]) {
             fail(`Missing ${required} in ${relative(root, pluginJsonPath)}`);
           }
@@ -70,12 +79,6 @@ if (!existsSync(marketplacePath)) {
         if (pluginJson.name !== plugin.name) {
           fail(
             `Plugin name mismatch: marketplace=${plugin.name}, plugin.json=${pluginJson.name}`
-          );
-        }
-
-        if (marketplace.version && pluginJson.version && marketplace.version !== pluginJson.version) {
-          fail(
-            `Version mismatch: marketplace=${marketplace.version}, ${relative(root, pluginJsonPath)}=${pluginJson.version}`
           );
         }
 
@@ -89,22 +92,55 @@ if (!existsSync(marketplacePath)) {
           );
         }
 
-        const logoPath = join(pluginDir, pluginJson.logo || "");
-        if (!pluginJson.logo || !existsSync(logoPath)) {
-          fail(`Logo path not found: ${relative(root, logoPath)}`);
+        if (pluginJson.logo) {
+          const logoPath = join(pluginDir, pluginJson.logo);
+          if (!existsSync(logoPath)) {
+            fail(`Logo path not found: ${relative(root, logoPath)}`);
+          }
         }
 
-        const mcpConfigPath = join(pluginDir, "mcp.json");
+        const mcpConfigPath = join(pluginDir, ".mcp.json");
         if (!existsSync(mcpConfigPath)) {
           fail(`Missing plugin MCP config: ${relative(root, mcpConfigPath)}`);
+        } else {
+          const mcp = readJson(mcpConfigPath);
+          const servers = mcp?.mcpServers;
+          if (!servers || typeof servers !== "object") {
+            fail(`${relative(root, mcpConfigPath)} must define mcpServers object`);
+          } else {
+            for (const [key, cfg] of Object.entries(servers)) {
+              if (!cfg || typeof cfg !== "object") {
+                fail(`Invalid mcpServers entry: ${key}`);
+                continue;
+              }
+              if (cfg.type === "stdio" || !cfg.type) {
+                if (!cfg.command) {
+                  fail(`stdio server "${key}" missing command in .mcp.json`);
+                }
+                const args = cfg.args;
+                if (!Array.isArray(args) || !args.some((a) => String(a).includes("${CLAUDE_PLUGIN_ROOT}"))) {
+                  fail(
+                    `stdio server "${key}" should use \${CLAUDE_PLUGIN_ROOT} in args for portable plugin installs`
+                  );
+                }
+              }
+            }
+          }
         }
 
-        for (const contentFolder of ["rules", "skills", "agents"]) {
+        const pluginDist = join(pluginDir, "dist", "index.js");
+        if (!existsSync(pluginDist)) {
+          fail(
+            `Missing ${relative(root, pluginDist)} — run npm run build (copies dist into the plugin directory)`
+          );
+        }
+
+        for (const contentFolder of ["skills", "agents"]) {
           const folderPath = join(pluginDir, contentFolder);
           if (!existsSync(folderPath)) continue;
           const files = walk(folderPath).filter((f) => statSync(f).isFile());
           for (const file of files) {
-            if (!(file.endsWith(".md") || file.endsWith(".mdc"))) continue;
+            if (!file.endsWith(".md")) continue;
             const text = readFileSync(file, "utf8");
             if (!text.startsWith("---")) {
               fail(`Missing frontmatter in ${relative(root, file)}`);

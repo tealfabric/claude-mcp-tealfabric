@@ -1,8 +1,10 @@
-# Tealfabric Cursor Connector — Developer Documentation
+# Tealfabric MCP — Developer Documentation
 
-This document is for developers who want to use, configure, or extend the **Tealfabric MCP Server** (Cursor connector) for the Tealfabric platform.
+This document is for developers who use, configure, or extend the **Tealfabric MCP Server** for the Tealfabric platform.
 
-**Tealfabric platform documentation:** [https://tealfabric.io/docs](https://tealfabric.io/docs) — use this as the reference for WebApps, ProcessFlow, APIs, and platform concepts.
+**Tealfabric platform documentation:** [https://tealfabric.io/docs](https://tealfabric.io/docs)
+
+**Claude Code MCP:** [https://code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)
 
 ---
 
@@ -11,7 +13,7 @@ This document is for developers who want to use, configure, or extend the **Teal
 1. [Overview](#1-overview)
 2. [Prerequisites](#2-prerequisites)
 3. [Installation and build](#3-installation-and-build)
-4. [Cursor configuration](#4-cursor-configuration)
+4. [Claude Code configuration](#4-claude-code-configuration)
 5. [Tools reference](#5-tools-reference)
 6. [Tealfabric API mapping](#6-tealfabric-api-mapping)
 7. [Environment variables](#7-environment-variables)
@@ -25,7 +27,7 @@ This document is for developers who want to use, configure, or extend the **Teal
 
 ## 1. Overview
 
-The Tealfabric Cursor Connector is an **MCP (Model Context Protocol) server** that runs locally and talks to the Tealfabric REST API. It lets the AI in **Cursor IDE**:
+The Tealfabric MCP Server is an **MCP (Model Context Protocol) server** that runs locally and talks to the Tealfabric REST API. It lets the AI in **Claude Code** (and other MCP clients):
 
 - **List** connectors and check connector OAuth2 requirements
 - **List, create, and update** integrations
@@ -38,10 +40,11 @@ The Tealfabric Cursor Connector is an **MCP (Model Context Protocol) server** th
 - **Create** and **update** process steps
 - **List, upload, move, delete** documents (package files for delivery)
 
-The server is **standalone**: it only depends on Node.js, npm packages (`@modelcontextprotocol/sdk`, `zod`), and the Tealfabric API. It does not depend on the Tealfabric codebase.
+The server is **standalone**: it only depends on Node.js, npm packages (`@modelcontextprotocol/sdk`, `zod`), and the Tealfabric API.
 
-- **Transport:** stdio (Cursor spawns the process and communicates via stdin/stdout).
+- **Transport:** stdio (the client spawns the process and communicates via stdin/stdout).
 - **Authentication:** Tealfabric API key via `TEALFABRIC_API_KEY` (sent as `X-API-Key`).
+- **Plugin bundle:** `npm run build` copies `dist/` to `plugins/tealfabric-mcp/dist/` so the Claude plugin can reference `${CLAUDE_PLUGIN_ROOT}/dist/index.js` without leaving the plugin directory.
 
 ---
 
@@ -49,54 +52,69 @@ The server is **standalone**: it only depends on Node.js, npm packages (`@modelc
 
 - **Node.js 18+**
 - **Tealfabric account** and an **API key**
-  - Create keys in the Tealfabric UI (e.g. User settings → API Keys) or via `POST /api/v1/api-keys` when logged in.
-- **Cursor IDE** (with MCP support; typically Cursor v0.40+)
+- **Claude Code** (or another MCP-capable client) for local stdio
 
 ---
 
 ## 3. Installation and build
 
 ```bash
-cd mcp-server-tealfabric
+cd claude-mcp-tealfabric
 npm install
 npm run build
 ```
 
-- **Output:** `dist/index.js` (and `dist/client.js`). Cursor runs `node dist/index.js`.
+- **Output:** `dist/index.js` (and `dist/client.js`), plus `plugins/tealfabric-mcp/dist/` (copy for the plugin).
 - **Scripts:**
-  - `npm run build` — compile TypeScript
-  - `npm run start` — run `node dist/index.js` (for manual testing)
+  - `npm run build` — compile TypeScript and sync plugin `dist/`
+  - `npm run start` — run `node dist/index.js` (manual testing)
   - `npm run dev` — build then run
+  - `npm run validate:marketplace` — validate `.claude-plugin/marketplace.json` and plugin layout
 
 ---
 
-## 4. Cursor configuration
+## 4. Claude Code configuration
 
-Add the MCP server in Cursor so the AI can call Tealfabric tools.
+### Plugin (marketplace)
 
-**Option A — UI:** Cursor Settings → **Tools & MCP** → **Add new MCP server**
+From the repo root:
 
-**Option B — Config file:** Create or edit `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (global):
+```text
+/plugin marketplace add .
+/plugin install tealfabric-mcp@tealfabric-team-marketplace
+```
+
+Set `TEALFABRIC_API_KEY` in your environment. Plugin MCP is defined in `plugins/tealfabric-mcp/.mcp.json` and uses `${CLAUDE_PLUGIN_ROOT}/dist/index.js`.
+
+### Manual stdio
+
+```bash
+claude mcp add --transport stdio \
+  --env TEALFABRIC_API_KEY=YOUR_KEY \
+  tealfabric -- node /ABSOLUTE/PATH/TO/claude-mcp-tealfabric/dist/index.js
+```
+
+Options must come **before** the server name; use `--` before the command. See [Option ordering](https://code.claude.com/docs/en/mcp#option-3-add-a-local-stdio-server).
+
+### Project `.mcp.json`
 
 ```json
 {
   "mcpServers": {
     "tealfabric": {
+      "type": "stdio",
       "command": "node",
-      "args": ["/ABSOLUTE/PATH/TO/mcp-server-tealfabric/dist/index.js"],
+      "args": ["/ABSOLUTE/PATH/TO/claude-mcp-tealfabric/dist/index.js"],
       "env": {
-        "TEALFABRIC_API_KEY": "YOUR_API_KEY",
-        "TEALFABRIC_API_URL": "https://tealfabric.io"
+        "TEALFABRIC_API_KEY": "${TEALFABRIC_API_KEY}",
+        "TEALFABRIC_API_URL": "${TEALFABRIC_API_URL:-https://tealfabric.io}"
       }
     }
   }
 }
 ```
 
-- Replace `YOUR_API_KEY` with your Tealfabric API key.
-- Replace `/ABSOLUTE/PATH/TO/mcp-server-tealfabric/dist/index.js` with the real path to the built entrypoint.
-
-Then **restart Cursor** so it loads the server.
+Use `/mcp` in Claude Code to verify the connection.
 
 ---
 
@@ -132,43 +150,41 @@ All tools return JSON (or error text) in MCP content. Parameters are validated w
 | `tealfabric_move_document` | Move or rename file/directory | `old_path`, `new_path`, `tenant_id` (optional) |
 | `tealfabric_delete_document` | Delete file or directory | `path`, `tenant_id` (optional) |
 
-For WebApp and ProcessFlow concepts (what a webapp, process, or step is), see [https://tealfabric.io/docs](https://tealfabric.io/docs) (e.g. Process Automation, WebApps).
+Several list/get tools set `anthropic/maxResultSizeChars` in tool metadata for large JSON responses (see [MCP output limits](https://code.claude.com/docs/en/mcp#raise-the-limit-for-a-specific-tool)).
 
 ---
 
 ## 6. Tealfabric API mapping
 
-The connector calls the Tealfabric REST API under the hood. All requests use the base URL from `TEALFABRIC_API_URL` and send `X-API-Key: <TEALFABRIC_API_KEY>`.
+The connector calls the Tealfabric REST API. All requests use the base URL from `TEALFABRIC_API_URL` and send `X-API-Key: <TEALFABRIC_API_KEY>`.
 
 | Tool | HTTP | Tealfabric endpoint |
 |------|------|---------------------|
-| `tealfabric_list_connectors` | GET | `/connectors` (+ optional `?action=&connector_id=`) |
-| `tealfabric_test_connector` | POST | `/connectors?action=test` (JSON body: connector config payload) |
-| `tealfabric_get_connector_oauth2_required` | GET | `/connectors/{connectorId}/oauth2-required` |
-| `tealfabric_list_integrations` | GET | `/integrations` (+ optional query filters/actions) |
-| `tealfabric_create_integration` | POST | `/integrations?action=create` (JSON body) |
-| `tealfabric_update_integration` | PUT | `/integrations?action=update` (body includes `integration_id`) |
-| `tealfabric_list_webapps` | GET | `/api/v1/webapps` (+ optional `?search=&limit=`) |
-| `tealfabric_get_webapp` | GET | `/api/v1/webapps/{id}` (+ optional `?version=`) |
-| `tealfabric_create_webapp` | POST | `/api/v1/webapps` (JSON body) |
-| `tealfabric_update_webapp` | PUT | `/api/v1/webapps/{id}` (JSON body) |
+| `tealfabric_list_connectors` | GET | `/api/v1/connectors` (+ optional query) |
+| `tealfabric_test_connector` | POST | `/api/v1/connectors?action=test` |
+| `tealfabric_get_connector_oauth2_required` | GET | `/api/v1/connectors/{id}/oauth2-required` |
+| `tealfabric_list_integrations` | GET | `/api/v1/integrations` (+ optional query) |
+| `tealfabric_create_integration` | POST | `/api/v1/integrations?action=create` |
+| `tealfabric_update_integration` | PUT | `/api/v1/integrations?action=update` |
+| `tealfabric_list_webapps` | GET | `/api/v1/webapps` |
+| `tealfabric_get_webapp` | GET | `/api/v1/webapps/{id}` |
+| `tealfabric_create_webapp` | POST | `/api/v1/webapps` |
+| `tealfabric_update_webapp` | PUT | `/api/v1/webapps/{id}` |
 | `tealfabric_publish_webapp` | POST | `/api/v1/webapps/{id}/publish` |
 | `tealfabric_list_processes` | GET | `/api/v1/processflow?action=processes` |
 | `tealfabric_get_process` | GET | `/api/v1/processflow?action=process&process_id={id}` |
 | `tealfabric_list_process_steps` | GET | `/api/v1/processflow?action=steps&process_id={id}` |
 | `tealfabric_get_process_step` | GET | `/api/v1/processflow?action=step&step_id={id}` |
-| `tealfabric_execute_process` | POST | `/api/v1/processflow?action=execute-process` (body: `process_id`, `input`) |
-| `tealfabric_create_process` | POST | `/api/v1/processes?action=create` (JSON body) |
-| `tealfabric_update_process` | PUT | `/api/v1/processes?action=update` (body: `process_id`, …) |
-| `tealfabric_create_process_step` | POST | `/api/v1/processes?action=create-step` (body: `process_id`, `step_name`, …) |
-| `tealfabric_update_process_step` | PUT | `/api/v1/processes?action=update-step` (body: `step_id`, …) |
-| `tealfabric_list_documents` | GET | `/api/v1/documents?action=list` (+ optional `path`, `tenant_id`) |
-| `tealfabric_get_document_metadata` | GET | `/api/v1/documents?action=metadata&file_path={path}` |
-| `tealfabric_upload_document` | POST | `/api/v1/documents?action=upload` (multipart: `destination_path`, `file`) |
-| `tealfabric_move_document` | PUT | `/api/v1/documents?action=move` (body: `old_path`, `new_path`) |
-| `tealfabric_delete_document` | DELETE | `/api/v1/documents?action=delete&path={path}` |
-
-Full API and platform behaviour are documented at [https://tealfabric.io/docs](https://tealfabric.io/docs) (ProcessFlow API, WebApps, Documents, etc.).
+| `tealfabric_execute_process` | POST | `/api/v1/processflow?action=execute-process` |
+| `tealfabric_create_process` | POST | `/api/v1/processes?action=create` |
+| `tealfabric_update_process` | PUT | `/api/v1/processes?action=update` |
+| `tealfabric_create_process_step` | POST | `/api/v1/processes?action=create-step` |
+| `tealfabric_update_process_step` | PUT | `/api/v1/processes?action=update-step` |
+| `tealfabric_list_documents` | GET | `/api/v1/documents?action=list` |
+| `tealfabric_get_document_metadata` | GET | `/api/v1/documents?action=metadata` |
+| `tealfabric_upload_document` | POST | `/api/v1/documents?action=upload` (multipart) |
+| `tealfabric_move_document` | PUT | `/api/v1/documents?action=move` |
+| `tealfabric_delete_document` | DELETE | `/api/v1/documents?action=delete` |
 
 ---
 
@@ -176,69 +192,69 @@ Full API and platform behaviour are documented at [https://tealfabric.io/docs](h
 
 | Variable | Required | Default | Description |
 |---------|----------|---------|-------------|
-| `TEALFABRIC_API_KEY` | Yes | — | Tealfabric API key. Sent as `X-API-Key`. |
-| `TEALFABRIC_API_URL` | No | `https://tealfabric.io` | Base URL of the Tealfabric API (no trailing slash). |
-
-Set these in Cursor’s MCP server config (`env`), or in the shell when running `node dist/index.js` manually.
+| `TEALFABRIC_API_KEY` | Yes | — | Tealfabric API key (`X-API-Key`). |
+| `TEALFABRIC_API_URL` | No | `https://tealfabric.io` | Base URL (no trailing slash). |
 
 ---
 
 ## 8. Security and API keys
 
-- **Do not commit** real API keys. Prefer Cursor’s MCP UI or a local `mcp.json` that is gitignored.
-- API keys are **tenant- and user-scoped** in Tealfabric; restrict scopes as the platform supports them.
-- The connector only uses **HTTPS** and does not log the key; it sends it only in the `X-API-Key` header to `TEALFABRIC_API_URL`.
+- **Do not commit** real API keys. Use environment variables or `.mcp.json` expansion.
+- Keys are **tenant- and user-scoped** in Tealfabric; restrict scopes where supported.
+- The connector uses **HTTPS** only; it does not log the key.
 
 ---
 
 ## 9. Project structure
 
 ```
-mcp-server-tealfabric/
+claude-mcp-tealfabric/
 ├── package.json
 ├── tsconfig.json
 ├── README.md
+├── .claude-plugin/
+│   └── marketplace.json          # Claude Code plugin marketplace index
 ├── docs/
-│   └── DEVELOPER.md          # This file
+│   └── DEVELOPER.md
+├── plugins/
+│   └── tealfabric-mcp/
+│       ├── .claude-plugin/
+│       │   └── plugin.json       # Plugin manifest
+│       ├── .mcp.json             # MCP stdio config (${CLAUDE_PLUGIN_ROOT}/dist/index.js)
+│       ├── skills/               # Claude Skills
+│       ├── agents/
+│       ├── assets/
+│       └── dist/                 # Populated by npm run build (gitignored)
 ├── src/
-│   ├── index.ts              # MCP server: McpServer, tool registration, stdio transport
-│   └── client.ts              # Tealfabric API client (fetch + X-API-Key)
-└── dist/                      # Built output (after npm run build)
-    ├── index.js
-    └── client.js
+│   ├── index.ts                  # MCP server
+│   └── client.ts                 # Tealfabric API client
+└── dist/                         # Built output (gitignored)
 ```
-
-- **`src/index.ts`** — Creates the MCP server, registers tools with Zod input schemas, connects `StdioServerTransport`, and forwards tool calls to `client.ts`.
-- **`src/client.ts`** — Exports `tealfabric` with methods for each API (webapps, processflow, documents). Uses `TEALFABRIC_API_KEY` and `TEALFABRIC_API_URL`.
 
 ---
 
 ## 10. Extending the server
 
-To add a new tool:
-
-1. **Add a method** in `src/client.ts` that calls the appropriate Tealfabric endpoint (reuse the existing `request()` pattern and headers).
-2. **Register a tool** in `src/index.ts` with `server.registerTool(name, { description, inputSchema }, async (args) => ({ content: resultContent(...) }))`.
-3. **Rebuild:** `npm run build`.
-
-For new Tealfabric endpoints or capabilities, use [https://tealfabric.io/docs](https://tealfabric.io/docs) and your environment’s API base (e.g. Swagger at `{TEALFABRIC_API_URL}/api-docs/` if available).
+1. Add a method in `src/client.ts` using the existing `request()` pattern.
+2. Register a tool in `src/index.ts` with `server.registerTool(...)`.
+3. Run `npm run build`.
 
 ---
 
 ## 11. Troubleshooting
 
 | Issue | What to check |
-|-------|-------------------------------|
-| "TEALFABRIC_API_KEY is not set" | Set `TEALFABRIC_API_KEY` in Cursor’s MCP server `env` (or in the shell). |
-| 401 from Tealfabric | Key invalid or revoked. Create a new key in Tealfabric (User → API Keys). |
-| Tools not visible in Cursor | Ensure the MCP server path in `args` points to `dist/index.js` and restart Cursor. |
-| "Cannot find module" at runtime | Run `npm run build` and point Cursor to `dist/index.js`, not `src/index.ts`. |
-| Wrong tenant or no data | API key is tied to a Tealfabric user/tenant; use a key for the correct account. |
+|-------|----------------|
+| "TEALFABRIC_API_KEY is not set" | Set the variable in the environment or MCP `env`. |
+| 401 from Tealfabric | Key invalid or revoked. |
+| Plugin MCP fails to start | Run `npm run build` so `plugins/tealfabric-mcp/dist/index.js` exists; paths must use `${CLAUDE_PLUGIN_ROOT}`. |
+| `claude plugin validate` errors | Fix manifest and paths per [plugins reference](https://code.claude.com/docs/en/plugins-reference). |
 
 ---
 
 ## 12. References
 
-- **Tealfabric platform documentation:** [https://tealfabric.io/docs](https://tealfabric.io/docs) — quickstart, ProcessFlow, WebApps, integrations, connectors.
-- **MCP (Model Context Protocol):** [https://modelcontextprotocol.io](https://modelcontextprotocol.io) — protocol and concepts.
-- **Cursor MCP:** Cursor Settings → Tools & MCP, or [Cursor docs on MCP](https://cursor.com/docs/cookbook/building-mcp-server) for connecting custom servers.
+- **Tealfabric:** [https://tealfabric.io/docs](https://tealfabric.io/docs)
+- **MCP:** [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
+- **Claude Code MCP:** [https://code.claude.com/docs/en/mcp](https://code.claude.com/docs/en/mcp)
+- **Claude plugins:** [https://code.claude.com/docs/en/plugins-reference](https://code.claude.com/docs/en/plugins-reference)

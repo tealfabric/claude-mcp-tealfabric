@@ -5,6 +5,24 @@ All notable changes to the Tealfabric MCP Server are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-04-15
+
+### Changed
+
+- **Claude Code plugin model** — Replaced Cursor marketplace (`.cursor-plugin/`) with Claude Code layout: root `.claude-plugin/marketplace.json`, plugin manifest at `plugins/tealfabric-mcp/.claude-plugin/plugin.json`, and MCP config at `plugins/tealfabric-mcp/.mcp.json` using `${CLAUDE_PLUGIN_ROOT}` and stdio.
+- **Build** — `npm run build` now copies compiled output to `plugins/tealfabric-mcp/dist/` so the plugin bundle stays self-contained (required for Claude Code plugin installs).
+- **Documentation** — README and `docs/DEVELOPER.md` now describe Claude Code (`claude mcp add`, project `.mcp.json`, `/plugin marketplace add`).
+
+### Added
+
+- **MCP server instructions** — Server advertises `instructions` for Claude Code tool search.
+- **Large JSON tools** — Selected tools include `anthropic/maxResultSizeChars` metadata for large list/get responses.
+- **Skill** — `safe-api-key-handling` migrated from Cursor `rules/*.mdc` into `skills/safe-api-key-handling/SKILL.md`.
+
+### Removed
+
+- **Cursor-specific manifests** — Removed `.cursor-plugin/marketplace.json`, `plugins/tealfabric-mcp/.cursor-plugin/plugin.json`, and Cursor-style `plugins/tealfabric-mcp/mcp.json` (`${workspaceFolder}`, `${input:...}`).
+
 ## [0.1.3] - Released
 
 ### Fixed

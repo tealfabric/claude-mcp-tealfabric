@@ -1,6 +1,6 @@
 /**
- * Tealfabric API client for MCP server.
- * Uses TEALFABRIC_API_KEY (X-API-Key or Authorization: Bearer) and TEALFABRIC_API_URL.
+ * Tealfabric API client for the MCP server.
+ * Uses TEALFABRIC_API_KEY (X-API-Key) and TEALFABRIC_API_URL.
  */
 
 import { readFile } from "fs/promises";

@@ -1,0 +1,16 @@
+{
+  "name": "tealfabric-team-marketplace",
+  "owner": {
+    "name": "Tealfabric"
+  },
+  "metadata": {
+    "description": "Tealfabric MCP plugin and tools for Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "tealfabric-mcp",
+      "source": "./plugins/tealfabric-mcp",
+      "description": "Tealfabric WebApps, ProcessFlow, documents, connectors, and integrations via MCP (stdio)."
+    }
+  ]
+}

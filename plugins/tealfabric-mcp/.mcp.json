@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "tealfabric": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/index.js"],
+      "env": {
+        "TEALFABRIC_API_KEY": "${TEALFABRIC_API_KEY}",
+        "TEALFABRIC_API_URL": "${TEALFABRIC_API_URL:-https://tealfabric.io}"
+      }
+    }
+  }
+}
