@@ -5,7 +5,11 @@ All notable changes to the Tealfabric MCP Server are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2026-04-15
+## [0.1.3] - 2026-04-15
+
+### Fixed
+
+- **API endpoint prefixing** — Updated connector and integration API calls to use `/api/v1/...` routes to avoid frontend-auth redirects and ensure MCP calls hit API endpoints.
 
 ### Changed
 
@@ -22,12 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **Legacy plugin manifests** — Removed the old marketplace and nested plugin manifests, plus the previous `plugins/tealfabric-mcp/mcp.json` that relied on IDE-specific placeholders (`${workspaceFolder}`, `${input:...}`).
-
-## [0.1.3] - Released
-
-### Fixed
-
-- **API endpoint prefixing** — Updated connector and integration API calls to use `/api/v1/...` routes to avoid frontend-auth redirects and ensure MCP calls hit API endpoints.
 
 ## [0.1.2] - Released
 

@@ -35,7 +35,7 @@ const largeJsonToolMeta = {
 };
 
 const server = new McpServer(
-  { name: "tealfabric", version: "0.2.0" },
+  { name: "tealfabric", version: "0.1.3" },
   { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS }
 );
 
