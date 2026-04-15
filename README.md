@@ -111,6 +111,16 @@ Any editor or CLI that supports MCP over stdio can run `node …/dist/index.js` 
 - Do **not** commit real API keys. Use environment variables or `.mcp.json` expansion with secrets outside Git.
 - API keys are scoped to your user/tenant in Tealfabric; use minimal scopes where supported.
 
+## Related projects
+
+Tealfabric ships **three MCP integrations** for different environments. Each repository targets the same Tealfabric APIs with packaging and docs for its host:
+
+| Host | Repository |
+|------|------------|
+| **Claude Code** (this repo) | [https://github.com/tealfabric/claude-mcp-tealfabric](https://github.com/tealfabric/claude-mcp-tealfabric) |
+| **Cursor** | [https://github.com/tealfabric/cursor-mcp-tealfabric](https://github.com/tealfabric/cursor-mcp-tealfabric) |
+| **Lovable** | [https://github.com/tealfabric/lovable-mcp-tealfabric](https://github.com/tealfabric/lovable-mcp-tealfabric) |
+
 ## Documentation
 
 - **Developer guide:** [docs/DEVELOPER.md](docs/DEVELOPER.md)
