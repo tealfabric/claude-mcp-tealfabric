@@ -65,9 +65,9 @@ At the project root:
 
 Do not commit real secrets; use env expansion and local env or secrets.
 
-## Cursor / other IDEs
+## Other MCP clients
 
-Any client that supports MCP stdio can run `node …/dist/index.js` with the same environment variables. Older Cursor-oriented `.cursor/mcp.json` examples are no longer maintained in this repo; use your client’s MCP settings with the same `command`, `args`, and `env`.
+Any editor or CLI that supports MCP over stdio can run `node …/dist/index.js` with the same environment variables as in [Claude Code: manual stdio server](#claude-code-manual-stdio-server) and [Project-scoped `.mcp.json`](#project-scoped-mcpjson-team-sharing). Configure `command`, `args`, and `env` in that client’s MCP settings to match.
 
 ## Tools exposed
 
