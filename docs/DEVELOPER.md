@@ -146,6 +146,7 @@ All tools return JSON (or error text) in MCP content. Parameters are validated w
 | `tealfabric_update_process_step` | Update an existing process step | `step_id`, optional: `step_name`, `description`, `code_snippet`, etc. |
 | `tealfabric_list_documents` | List documents in a directory | `path` (optional), `tenant_id` (optional) |
 | `tealfabric_get_document_metadata` | Get file metadata | `file_path`, `tenant_id` (optional) |
+| `tealfabric_download_document` | Download a file; returns JSON response or binary-safe base64 payload | `file_path`, `tenant_id` (optional) |
 | `tealfabric_upload_document` | Upload a file (e.g. built package) | `destination_path`, `file_path`, `tenant_id` (optional) |
 | `tealfabric_move_document` | Move or rename file/directory | `old_path`, `new_path`, `tenant_id` (optional) |
 | `tealfabric_delete_document` | Delete file or directory | `path`, `tenant_id` (optional) |
@@ -182,6 +183,7 @@ The connector calls the Tealfabric REST API. All requests use the base URL from 
 | `tealfabric_update_process_step` | PUT | `/api/v1/processes?action=update-step` |
 | `tealfabric_list_documents` | GET | `/api/v1/documents?action=list` |
 | `tealfabric_get_document_metadata` | GET | `/api/v1/documents?action=metadata` |
+| `tealfabric_download_document` | GET | `/api/v1/documents?action=download&file_path={path}` |
 | `tealfabric_upload_document` | POST | `/api/v1/documents?action=upload` (multipart) |
 | `tealfabric_move_document` | PUT | `/api/v1/documents?action=move` |
 | `tealfabric_delete_document` | DELETE | `/api/v1/documents?action=delete` |
