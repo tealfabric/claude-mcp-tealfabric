@@ -5,6 +5,13 @@ All notable changes to the Tealfabric MCP Server are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Document download tool** — Added `tealfabric_download_document` MCP tool and API client support for `GET /api/v1/documents?action=download&file_path={path}` with base64 encoding for binary payloads.
+- **Documentation** — Updated root README, developer docs, and plugin README with `tealfabric_download_document` usage and API mapping.
+
 ## [0.1.3] - 2026-04-15
 
 ### Fixed

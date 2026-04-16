@@ -26,6 +26,15 @@ From the repository root:
 
 In Claude Code: `/mcp` — the `tealfabric` server should appear when the plugin is enabled.
 
+## Document tools
+
+- `tealfabric_list_documents` — list files/directories
+- `tealfabric_get_document_metadata` — fetch metadata for a file
+- `tealfabric_download_document` — download a file; returns JSON response or base64 payload for binary-safe transfer
+- `tealfabric_upload_document` — upload a local file
+- `tealfabric_move_document` — move/rename files or directories
+- `tealfabric_delete_document` — delete files or directories
+
 ## Contents
 
 - **Skills** — Efficient tool usage and safe API key handling (`skills/`)
