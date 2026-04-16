@@ -54,6 +54,27 @@ async function request<T>(
   }
 }
 
+function parseFilenameFromContentDisposition(contentDisposition: string | null): string | undefined {
+  if (!contentDisposition) return undefined;
+
+  // RFC 5987 form: filename*=UTF-8''encoded%20name.ext
+  const filenameStarMatch = contentDisposition.match(/filename\*\s*=\s*([^;]+)/i);
+  if (filenameStarMatch?.[1]) {
+    const raw = filenameStarMatch[1].trim().replace(/^"(.*)"$/, "$1");
+    const encoded = raw.includes("''") ? raw.split("''").slice(1).join("''") : raw;
+    try {
+      return decodeURIComponent(encoded);
+    } catch {
+      return encoded;
+    }
+  }
+
+  // Fallback form: filename="name.ext" or filename=name.ext
+  const filenameMatch = contentDisposition.match(/filename\s*=\s*(?:"([^"]+)"|([^;]+))/i);
+  if (!filenameMatch) return undefined;
+  return (filenameMatch[1] ?? filenameMatch[2])?.trim();
+}
+
 export const tealfabric = {
   // --- Connectors ---
   async listConnectors(params?: {
@@ -365,6 +386,50 @@ export const tealfabric = {
       "GET",
       `/api/v1/documents?${q.toString()}`
     );
+  },
+
+  async downloadDocument(params: { file_path: string; tenant_id?: string }) {
+    const base = getBaseUrl();
+    const q = new URLSearchParams({ action: "download", file_path: params.file_path });
+    if (params.tenant_id) q.set("tenant_id", params.tenant_id);
+    const url = `${base}/api/v1/documents?${q.toString()}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: getApiKeyHeaders(),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Tealfabric API ${res.status}: ${text || res.statusText}`);
+    }
+
+    const contentType = res.headers.get("content-type") ?? "application/octet-stream";
+    if (contentType.toLowerCase().includes("application/json")) {
+      const text = await res.text();
+      if (!text) return { success: true };
+      try {
+        return JSON.parse(text) as { success: boolean; data?: unknown; error?: string };
+      } catch {
+        return { success: true, data: text };
+      }
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const filenameFromHeader = parseFilenameFromContentDisposition(
+      res.headers.get("content-disposition")
+    );
+    const filename = filenameFromHeader || basename(params.file_path);
+
+    return {
+      success: true,
+      data: {
+        file_path: params.file_path,
+        filename,
+        content_type: contentType,
+        content_base64: Buffer.from(arrayBuffer).toString("base64"),
+      },
+    };
   },
 
   async uploadDocument(params: {
