@@ -5,6 +5,34 @@ All notable changes to the Tealfabric MCP Server are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - Released
+
+Full narrative: [docs/RELEASE_NOTES_0.2.0.md](docs/RELEASE_NOTES_0.2.0.md). Migration checklist: [docs/MIGRATING.md](docs/MIGRATING.md).
+
+Parity release with Cursor MCP 0.2.0 — aligned with backend-next REST contracts.
+
+### Breaking
+
+- **Publish webapp** — `tealfabric_publish_webapp` now requires `version`.
+- **Create webapp** — `tealfabric_create_webapp` requires `type`, `page_content`, and `webapp_user_id` (in addition to `name`).
+- **List webapps** — replaced ignored `limit` with `page` / `items_per_page`.
+- **Test connector** — replaced opaque `payload` with `connector_id` + optional `configuration`.
+- **Process create/update** — removed non-persisted fields (`version`, `tags`, `estimated_duration`, `template_id`).
+- **Document download** — uses `GET /api/v1/documents/download` (retired `?action=download`).
+
+### Added
+
+- Webapp companions: unpublish, create version, delete.
+- Integration companions: execute, delete.
+- Process companions: delete, retire, delete step.
+- Document companions: tree, read-text, write-text.
+- Integration/process write fields: `configuration` / `connector_configuration`, `executable_by_ai_agents`, step `language` / `execution_timeout`.
+- Docs: release notes, migration guide, webapp/process/document skills.
+
+### Fixed
+
+- Client paths and schemas aligned with current backend-next REST controllers.
+
 ## [0.1.3] - 2026-04-15
 
 ### Fixed
